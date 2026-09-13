@@ -1,4 +1,6 @@
 <?php
+
+// uniquement pour verifier les tables on pouvait meme le suprimer apres
 require 'vendor/autoload.php';
 require 'config/database.php';
 
@@ -35,3 +37,7 @@ echo "Salle liée à cette réservation : " . $reservation->salle->nom . "\n";
 $reservation->delete();
 $salle->delete();
 echo "Nettoyage effectué.\n";
+
+/*
+php verifier-modeles.php
+*/ 
