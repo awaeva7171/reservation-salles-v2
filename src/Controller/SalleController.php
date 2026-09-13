@@ -1,71 +1,99 @@
 <?php
-declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\DTO\CreerSalleDTO;
 use App\Repository\SalleRepositoryInterface;
-use App\Validation\SalleValidator;
-use App\Model\Salle;
+use App\Validation\ValidatorInterface;
 
-final class SalleController extends AbstractController
+class SalleController extends AbstractController
 {
     public function __construct(
-        private SalleRepositoryInterface $salles,
-        private SalleValidator $validator,
-    ) {
-    }
+        private SalleRepositoryInterface $salleRepository,
+        private ValidatorInterface $validator
+    ) {}
 
     public function index(): void
     {
-        $salles = $this->salles->lister();
-        $this->renderView('salle/index', ['salles' => $salles]);
+        $salles = $this->salleRepository->getAllSalle();
+
+        $this->renderView('salle/index', [
+            'title'  => 'Liste des salles',
+            'salles' => $salles
+        ]);
     }
 
     public function show(int $id): void
     {
-        $salle = $this->salles->trouver($id);
-        $this->renderView('salle/show', ['salle' => $salle]);
+        $salle = $this->salleRepository->findSalle($id);
+
+        if (!$salle) {
+            http_response_code(404);
+            $this->renderView('error/404');
+            return;
+        }
+
+        $this->renderView('salle/show', [
+            'title' => "Details de la salle {$salle->nom}",
+            'salle' => $salle
+        ]);
     }
 
     public function create(): void
     {
-        $this->renderView('salle/form', ['errors' => [], 'old' => [], 'salle' => null]);
+        $errors = $_SESSION['errors'] ?? [];
+        $old    = $_SESSION['old'] ?? [];
+
+        unset($_SESSION['errors'], $_SESSION['old']);
+
+        $this->renderView('salle/form', [
+            'title'  => 'Creer une salle',
+            'errors' => $errors,
+            'old'    => $old
+        ]);
     }
 
     public function store(): void
     {
-        $resultat = $this->validator->validate($_POST);
+        $data = [
+            'nom'           => trim($_POST['nom'] ?? ''),
+            'batiment'      => trim($_POST['batiment'] ?? ''),
+            'capacite'      => (int)($_POST['capacite'] ?? 0),
+            'active'        => isset($_POST['active']),
+            'type_salle_id' => $_POST['type_salle_id'] ?? null
+        ];
 
-        if (!$resultat->isValid()) {
-            $this->renderView('salle/form', ['errors' => $resultat->errors(), 'old' => $_POST, 'salle' => null]);
-            return;
+        $validationResult = $this->validator->validate($data);
+        if (!$validationResult->isValid()) {
+            $_SESSION['errors'] = $validationResult->errors();
+            $_SESSION['old']    = $data;
+            $this->redirect('/salles/create');
         }
 
-        $salle = new Salle($resultat->data());
-        $this->salles->enregistrer($salle);
+        $dto = CreerSalleDTO::fromArray($data);
 
+        $_SESSION['success'] = "Salle enregistree avec succes !";
         $this->redirect('/salles');
     }
 
     public function edit(int $id): void
     {
-        $salle = $this->salles->trouver($id);
-        $this->renderView('salle/form', ['errors' => [], 'old' => [], 'salle' => $salle]);
+        $salle = $this->salleRepository->findSalle($id);
+
+        if (!$salle) {
+            http_response_code(404);
+            $this->renderView('error/404');
+            return;
+        }
+
+        $this->renderView('salle/form', [
+            'title' => "Modifier la salle {$salle->nom}",
+            'salle' => $salle
+        ]);
     }
 
     public function update(int $id): void
     {
-        $resultat = $this->validator->validate($_POST);
-        $salle = $this->salles->trouver($id);
-
-        if (!$resultat->isValid()) {
-            $this->renderView('salle/form', ['errors' => $resultat->errors(), 'old' => $_POST, 'salle' => $salle]);
-            return;
-        }
-
-        $salle->fill($resultat->data());
-        $this->salles->enregistrer($salle);
-
-        $this->redirect('/salles/' . $id);
+        $this->redirect('/salles');
     }
 }

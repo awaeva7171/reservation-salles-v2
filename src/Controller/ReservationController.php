@@ -1,85 +1,112 @@
 <?php
-declare(strict_types=1);
 
 namespace App\Controller;
 
 use App\DTO\CreerReservationDTO;
-use App\Exception\ReservationIntrouvableException;
-use App\Exception\SalleIndisponibleException;
+use App\Service\CreerReservationService;
+use App\Service\AnnulerReservationService;
 use App\Repository\ReservationRepositoryInterface;
-use App\Service\AnnulerReservationServiceInterface;
-use App\Service\CreerReservationServiceInterface;
-use App\Validation\ReservationValidator;
-use DateTimeImmutable;
+use App\Repository\SalleRepositoryInterface;
+use App\Validation\ValidatorInterface;
+use App\Exception\SalleIndisponibleException;
+use App\Exception\ReservationIntrouvableException;
+use Exception;
 
-final class ReservationController extends AbstractController
+class ReservationController extends AbstractController
 {
     public function __construct(
-        private ReservationRepositoryInterface $reservations,
-        private ReservationValidator $validator,
-        private CreerReservationServiceInterface $creerService,
-        private AnnulerReservationServiceInterface $annulerService,
-    ) {
-    }
+        private ReservationRepositoryInterface $reservationRepository,
+        private SalleRepositoryInterface $salleRepository,
+        private CreerReservationService $creerReservationService,
+        private AnnulerReservationService $annulerReservationService,
+        private ValidatorInterface $validator
+    ) {}
 
     public function index(): void
     {
-        $salleId = $_GET['salle_id'] ?? null;
-        $reservations = $salleId
-            ? $this->reservations->listerParSalle((int) $salleId)
-            : $this->reservations->lister();
+        $reservations = $this->reservationRepository->getAllReservation();
 
-        $this->renderView('reservation/index', ['reservations' => $reservations]);
+        $this->renderView('reservation/index', [
+            'title'        => 'Liste des reservations',
+            'reservations' => $reservations
+        ]);
     }
 
     public function show(int $id): void
     {
-        $reservation = $this->reservations->trouver($id);
-        $this->renderView('reservation/show', ['reservation' => $reservation]);
+        $reservation = $this->reservationRepository->findReservation($id);
+
+        if (!$reservation) {
+            http_response_code(404);
+            $this->renderView('error/404');
+            return;
+        }
+
+        $this->renderView('reservation/show', [
+            'title'       => "Reservation #{$id}",
+            'reservation' => $reservation
+        ]);
     }
 
     public function create(): void
     {
-        $this->renderView('reservation/form', ['errors' => [], 'old' => []]);
+        $salles = $this->salleRepository->getAllSalle();
+        $errors = $_SESSION['errors'] ?? [];
+        $old    = $_SESSION['old'] ?? [];
+
+        unset($_SESSION['errors'], $_SESSION['old']);
+
+        $this->renderView('reservation/form', [
+            'title'  => 'Nouvelle reservation',
+            'salles' => $salles,
+            'errors' => $errors,
+            'old'    => $old
+        ]);
     }
 
     public function store(): void
     {
-        $resultat = $this->validator->validate($_POST);
+        $data = [
+            'salle_id'    => $_POST['salle_id'] ?? null,
+            'responsable' => trim($_POST['responsable'] ?? ''),
+            'email'       => trim($_POST['email'] ?? ''),
+            'motif'       => trim($_POST['motif'] ?? ''),
+            'date_debut'  => $_POST['date_debut'] ?? '',
+            'date_fin'    => $_POST['date_fin'] ?? ''
+        ];
 
-        if (!$resultat->isValid()) {
-            $this->renderView('reservation/form', ['errors' => $resultat->errors(), 'old' => $_POST]);
-            return;
+        $validationResult = $this->validator->validate($data);
+        if (!$validationResult->isValid()) {
+            $_SESSION['errors'] = $validationResult->errors();
+            $_SESSION['old']    = $data;
+            $this->redirect('/reservations/create');
         }
-
-        $data = $resultat->data();
-        $dto = new CreerReservationDTO(
-            salleId: (int) $data['salle_id'],
-            responsable: $data['responsable'],
-            email: $data['email'],
-            motif: $data['motif'],
-            dateDebut: new DateTimeImmutable($data['date_debut']),
-            dateFin: new DateTimeImmutable($data['date_fin']),
-        );
 
         try {
-            $reservation = $this->creerService->creer($dto);
-        } catch (SalleIndisponibleException $e) {
-            $this->renderView('reservation/form', ['errors' => ['global' => [$e->getMessage()]], 'old' => $_POST]);
-            return;
-        }
+            $dto = CreerReservationDTO::fromArray($data);
+            $reservationId = $this->creerReservationService->creatReservation($dto);
 
-        $this->redirect('/reservations/' . $reservation->id);
+            $_SESSION['success'] = "Reservation #{$reservationId} creee avec succes !";
+            $this->redirect('/reservations');
+
+        } catch (SalleIndisponibleException $e) {
+            $_SESSION['errors']['globale'] = $e->getMessage();
+            $_SESSION['old'] = $data;
+            $this->redirect('/reservations/create');
+        } catch (Exception $e) {
+            $_SESSION['errors']['globale'] = $e->getMessage();
+            $_SESSION['old'] = $data;
+            $this->redirect('/reservations/create');
+        }
     }
 
     public function cancel(int $id): void
     {
         try {
-            $this->annulerService->annuler($id);
+            $this->annulerReservationService->annuler($id);
+            $_SESSION['success'] = "La reservation #{$id} a ete annulee avec succes.";
         } catch (ReservationIntrouvableException $e) {
-            http_response_code(404);
-            $this->renderView('error/404');
-            return;
+            $_SESSION['errors']['globale'] = $e->getMessage();
         }
 
         $this->redirect('/reservations');

@@ -18,9 +18,9 @@ final class CreerReservationService implements CreerReservationServiceInterface
     ) {
     }
 
-    public function creer(CreerReservationDTO $dto): Reservation
+    public function creatReservation(CreerReservationDTO $dto): int
     {
-        $salle = $this->salles->trouver($dto->salleId);
+        $salle = $this->salles->findSalle($dto->salleId);
 
         if ($salle === null) {
             throw new SalleIndisponibleException("La salle n'existe pas.");
@@ -59,6 +59,8 @@ final class CreerReservationService implements CreerReservationServiceInterface
             'statut' => 'confirmee',
         ]);
 
-        return $this->reservations->enregistrer($reservation);
+        $reservation = $this->reservations->enregistrer($reservation);
+
+        return $reservation->id;
     }
 }

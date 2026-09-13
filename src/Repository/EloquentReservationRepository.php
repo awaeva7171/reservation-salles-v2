@@ -8,7 +8,7 @@ use DateTimeImmutable;
 
 final class EloquentReservationRepository implements ReservationRepositoryInterface
 {
-    public function lister(): array
+    public function getAllReservation(): array
     {
         return Reservation::all()->all();
     }
@@ -18,7 +18,7 @@ final class EloquentReservationRepository implements ReservationRepositoryInterf
         return Reservation::where('salle_id', $salleId)->get()->all();
     }
 
-    public function trouver(int $id): ?Reservation
+    public function findReservation(int $id): ?Reservation
     {
         return Reservation::find($id);
     }

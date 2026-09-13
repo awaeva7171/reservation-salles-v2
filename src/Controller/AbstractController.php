@@ -1,19 +1,35 @@
 <?php
-declare(strict_types=1);
 
 namespace App\Controller;
 
 abstract class AbstractController
 {
-    protected function renderView(string $vue, array $donnees = []): void
+    protected function renderView(string $view, array $data = []): void
     {
-        extract($donnees);
-        require __DIR__ . '/../../templates/' . $vue . '.php';
+        extract($data);
+
+        $viewPath = __DIR__ . "/../../templates/{$view}.php";
+
+        if (!file_exists($viewPath)) {
+            throw new \RuntimeException("La vue [{$view}] est introuvable a l'emplacement : {$viewPath}");
+        }
+
+        ob_start();
+        require $viewPath;
+        $content = ob_get_clean();
+
+        $layoutPath = __DIR__ . '/../../templates/layout/base.php';
+
+        if (file_exists($layoutPath)) {
+            require $layoutPath;
+        } else {
+            echo $content;
+        }
     }
 
-    protected function redirect(string $chemin): void
+    protected function redirect(string $url): void
     {
-        header('Location: ' . $chemin);
+        header("Location: {$url}");
         exit;
     }
 }

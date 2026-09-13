@@ -7,12 +7,12 @@ use App\Model\Salle;
 
 final class EloquentSalleRepository implements SalleRepositoryInterface
 {
-    public function lister(): array
+    public function getAllSalle(): array
     {
         return Salle::all()->all();
     }
 
-    public function trouver(int $id): ?Salle
+    public function findSalle(int $id): ?Salle
     {
         return Salle::find($id);
     }

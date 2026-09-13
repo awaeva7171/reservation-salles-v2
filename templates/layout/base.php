@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Gestion des reservations de salles</title>
+    <title><?= htmlspecialchars($title ?? 'Gestion des reservations de salles') ?></title>
     <link rel="stylesheet" href="/assets/style.css">
 </head>
 <body>
@@ -15,3 +15,12 @@
         </nav>
     </header>
     <main>
+        <?php if (!empty($_SESSION['success'])): ?>
+            <div class="succes"><?= htmlspecialchars($_SESSION['success']) ?></div>
+            <?php unset($_SESSION['success']); ?>
+        <?php endif; ?>
+
+        <?= $content ?>
+    </main>
+</body>
+</html>

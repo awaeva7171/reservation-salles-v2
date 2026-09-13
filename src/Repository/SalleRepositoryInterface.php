@@ -7,9 +7,9 @@ use App\Model\Salle;
 
 interface SalleRepositoryInterface
 {
-    public function lister(): array;
+    public function getAllSalle(): array;
 
-    public function trouver(int $id): ?Salle;
+    public function findSalle(int $id): ?Salle;
 
     public function enregistrer(Salle $salle): Salle;
 }

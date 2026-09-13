@@ -8,11 +8,11 @@ use DateTimeImmutable;
 
 interface ReservationRepositoryInterface
 {
-    public function lister(): array;
+    public function getAllReservation(): array;
 
     public function listerParSalle(int $salleId): array;
 
-    public function trouver(int $id): ?Reservation;
+    public function findReservation(int $id): ?Reservation;
 
     public function rechercherConflit(int $salleId, DateTimeImmutable $debut, DateTimeImmutable $fin): ?Reservation;
 

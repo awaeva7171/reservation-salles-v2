@@ -16,4 +16,16 @@ final class CreerReservationDTO
         public readonly DateTimeImmutable $dateFin,
     ) {
     }
+
+    public static function fromArray(array $data): self
+    {
+        return new self(
+            salleId: (int) $data['salle_id'],
+            responsable: $data['responsable'],
+            email: $data['email'],
+            motif: $data['motif'],
+            dateDebut: new DateTimeImmutable($data['date_debut']),
+            dateFin: new DateTimeImmutable($data['date_fin']),
+        );
+    }
 }
