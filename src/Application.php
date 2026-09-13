@@ -10,3 +10,7 @@ final class Application
         echo "Application démarrée";
     }
 }
+
+
+/*pour demarrer l'application:
+php -r "require 'vendor/autoload.php'; (new App\Application())->run();"*/
