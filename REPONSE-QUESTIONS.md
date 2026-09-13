@@ -142,3 +142,21 @@ Pour garantir que seul un nombre entier valide soit accepté comme identifiant, 
 
 **4. Quel composant doit interpréter le handler retourné ?**
 La classe Router — c'est elle qui reçoit le tableau [Controller::class, 'methode'] renvoyé par FastRoute et sait comment l'exécuter via le conteneur.
+
+
+## Étape 11
+
+**1. Quelle différence existe entre injection et conteneur ?**
+L'injection est le principe de fournir ses dépendances à une classe via son constructeur plutôt que de les créer elle-même. Le conteneur (PHP-DI) est l'outil qui automatise cette injection.
+
+**2. Qu'est-ce que l'autowiring ?**
+La capacité du conteneur à deviner automatiquement comment construire une classe en lisant les types de son constructeur, sans configuration explicite.
+
+**3. Pourquoi les interfaces nécessitent-elles une définition ?**
+Parce que PHP-DI ne peut pas deviner seul quelle implémentation concrète utiliser pour une interface — il faut le préciser (comme on l'a fait pour Repository et Service, et via #[Inject] pour les Validators ambigus).
+
+**4. Pourquoi limiter $container->get() au point d'entrée ?**
+Pour éviter l'anti-pattern Service Locator — chaque classe doit recevoir ses dépendances via son constructeur, sans interroger elle-même le conteneur.
+
+**5. Quel anti-pattern apparaît si toutes les classes interrogent le conteneur ?**
+Le Service Locator — rend le code plus difficile à tester et masque les vraies dépendances d'une classe.

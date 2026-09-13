@@ -3,13 +3,15 @@
 namespace App\Controller;
 
 use App\DTO\CreerReservationDTO;
-use App\Service\CreerReservationService;
-use App\Service\AnnulerReservationService;
+use App\Service\CreerReservationServiceInterface;
+use App\Service\AnnulerReservationServiceInterface;
 use App\Repository\ReservationRepositoryInterface;
 use App\Repository\SalleRepositoryInterface;
 use App\Validation\ValidatorInterface;
+use App\Validation\ReservationValidator;
 use App\Exception\SalleIndisponibleException;
 use App\Exception\ReservationIntrouvableException;
+use DI\Attribute\Inject;
 use Exception;
 
 class ReservationController extends AbstractController
@@ -17,9 +19,9 @@ class ReservationController extends AbstractController
     public function __construct(
         private ReservationRepositoryInterface $reservationRepository,
         private SalleRepositoryInterface $salleRepository,
-        private CreerReservationService $creerReservationService,
-        private AnnulerReservationService $annulerReservationService,
-        private ValidatorInterface $validator
+        private CreerReservationServiceInterface $creerReservationService,
+        private AnnulerReservationServiceInterface $annulerReservationService,
+        #[Inject(ReservationValidator::class)] private ValidatorInterface $validator
     ) {}
 
     public function index(): void

@@ -5,12 +5,14 @@ namespace App\Controller;
 use App\DTO\CreerSalleDTO;
 use App\Repository\SalleRepositoryInterface;
 use App\Validation\ValidatorInterface;
+use App\Validation\SalleValidator;
+use DI\Attribute\Inject;
 
 class SalleController extends AbstractController
 {
     public function __construct(
         private SalleRepositoryInterface $salleRepository,
-        private ValidatorInterface $validator
+        #[Inject(SalleValidator::class)] private ValidatorInterface $validator
     ) {}
 
     public function index(): void
