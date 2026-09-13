@@ -5,12 +5,13 @@ namespace App;
 
 final class Application
 {
+    public function __construct(
+        private Router $router,
+    ) {
+    }
+
     public function run(): void
     {
-        echo "Application démarrée";
+        $this->router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
     }
 }
-
-
-/*pour demarrer l'application:
-php -r "require 'vendor/autoload.php'; (new App\Application())->run();"*/
